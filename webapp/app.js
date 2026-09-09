@@ -1,0 +1,1 @@
+const tg=window.Telegram?.WebApp; if(tg){tg.ready();tg.expand();} document.getElementById('start').onclick=()=>{document.getElementById('status').textContent='اتصال آماده است؛ از داخل ربات یک جلسه Whisper بساز.'; if(tg) tg.HapticFeedback?.impactOccurred('light');};

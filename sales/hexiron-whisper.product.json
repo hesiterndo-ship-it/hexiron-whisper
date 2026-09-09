@@ -1,0 +1,38 @@
+{
+  "product_code": "whisper",
+  "slug": "hexiron-whisper",
+  "name": {
+    "fa": "هکسیرون نجوا",
+    "en": "HEXIRON WHISPER"
+  },
+  "tagline": {
+    "fa": "نجوا ناشناس، چت خصوصی دوطرفه و ضداسپم برای گروه‌ها و چت‌روم‌های تلگرام",
+    "en": "Anonymous whisper, two-way private chat and anti-spam for Telegram groups"
+  },
+  "category": "telegram-bot",
+  "version": "2.0",
+  "note": "این محصول اکنون مستقیماً داخل دیتابیس hexiron-sales ثبت شده (جدول products، id='whisper'). این فایل صرفاً برای مستندسازی/آرشیو نگه داشته شده و منبع حقیقت پنل ادمین خود ربات فروش است.",
+  "license_api": {
+    "contract": "GET {SALES_API_URL}/api/v1/license?product=whisper&group_id={telegram_chat_id}",
+    "auth_header": "X-API-Key",
+    "response_active": { "active": true, "expires_at": 1735689600, "plan": "۱ ماهه (اسم پکیج)", "tier": "pro | business", "user_id": 123 },
+    "response_inactive": { "active": false }
+  },
+  "tiers": [
+    {
+      "code": "free",
+      "note": "پلن Free داخل hexiron-sales لایسنس واقعی نداره؛ همون حالت پیش‌فرضیه که وقتی لایسنسی فعال نیست (active=false) بات نجوا خودش اعمال می‌کنه.",
+      "limits": { "whispers_per_day": 50, "groups": 1 }
+    },
+    {
+      "code": "pro",
+      "note": "موقع ساخت پکیج در «💰 مدیریت پکیج‌ها → ➕ پکیج جدید» برای محصول whisper، این tier رو انتخاب کن.",
+      "limits": { "whispers_per_day": null, "groups": 10 }
+    },
+    {
+      "code": "business",
+      "note": "همون بالا، ولی tier=Business.",
+      "limits": { "whispers_per_day": null, "groups": null }
+    }
+  ]
+}

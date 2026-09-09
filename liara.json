@@ -1,0 +1,1 @@
+{"app":"hexiron-whisper","port":80,"build":{"location":"iran"},"disks":[{"name":"data","mountTo":"/data"}]}
