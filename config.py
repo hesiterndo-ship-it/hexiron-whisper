@@ -3,6 +3,13 @@ from dotenv import load_dotenv
 load_dotenv()
 BOT_TOKEN=os.getenv('BOT_TOKEN','')
 OWNER_ID=int(os.getenv('OWNER_ID','0'))
+
+# پروکسی SOCKS5 برای اتصال به تلگرام - اگه سرور مستقیم به تلگرام دسترسی نداشته باشه
+# (مثلاً روی سرورهای داخل ایران)، بدون این، ربات هیچ‌وقت آپدیت نمی‌گیره و کاملاً
+# بی‌جواب می‌مونه، بدون هیچ خطای واضحی. مقدار مثل بقیه‌ی ربات‌های همین مجموعه:
+#   SOCKS5_PROXY_URL=socks5://user:pass@host:1080
+TELEGRAM_PROXY_URL = os.getenv('SOCKS5_PROXY_URL', '').strip() or os.getenv('TELEGRAM_PROXY_URL', '').strip()
+
 SALES_API_URL=os.getenv('SALES_API_URL','').rstrip('/')
 SALES_API_KEY=os.getenv('SALES_API_KEY','')
 DB_PATH=os.getenv('DB_PATH','/data/hexiron_whisper.db')
