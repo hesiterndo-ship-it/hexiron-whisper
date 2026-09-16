@@ -44,7 +44,7 @@ async def whisper(update:Update,context:ContextTypes.DEFAULT_TYPE):
     except Exception:
         set_session(sid,'undelivered')
         return await m.reply_text('⚠️ تحویل درخواست ممکن نشد. کاربر باید ابتدا ربات را در خصوصی با /start باز کند.')
-    log_event(u.id,chat.id,'request_created',sid); await m.reply_text('✅ درخواست نجوا ارسال شد. هویت شما برای طرف مقابل نمایش داده نمی‌شود.')
+    log_event(u.id,chat.id,'request_created',sid); await m.reply_text('✅ درخواست نجوا ارسال شد.از داخل چت بات  میتونی ماکلمه رو  شروع کنی .')
 
 async def callbacks(update:Update,context:ContextTypes.DEFAULT_TYPE):
     q=update.callback_query; await q.answer(); u=q.from_user; data=q.data
