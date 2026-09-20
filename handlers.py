@@ -1,3 +1,4 @@
+import re
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from database import *
@@ -234,11 +235,12 @@ async def set_channel(update:Update,context:ContextTypes.DEFAULT_TYPE):
         current_id=get_setting('force_sub_channel_id','')
         current_link=get_setting('force_sub_channel_link','')
         return await update.message.reply_text(
-            'برای تنظیم کانال اجباری:\n'
+            'برای تنظیم کانال اجباری، یکی از این‌ها رو بفرست:\n'
             '/setchannel @channelusername\n'
-            'یا برای کانال خصوصی (باید ربات ادمین کانال باشه):\n'
+            '/setchannel https://t.me/channelusername\n'
+            'یا برای کانال خصوصی (حتماً هر دو رو بده):\n'
             '/setchannel -100XXXXXXXXXX https://t.me/+XXXXXXXX\n\n'
-            f'کانال فعلی: {current_id or "تنظیم نشده"}\n'
+            f'شناسه‌ی فعلی: {current_id or "تنظیم نشده"}\n'
             f'لینک فعلی: {current_link or "—"}\n\n'
             'برای غیرفعال‌کردن کامل: /setchannel off'
         )
@@ -246,6 +248,27 @@ async def set_channel(update:Update,context:ContextTypes.DEFAULT_TYPE):
     if value.lower()=='off':
         set_setting('force_sub_channel_id',''); set_setting('force_sub_channel_link','')
         return await update.message.reply_text('✅ کانال اجباری غیرفعال شد.')
-    link=parts[2].strip() if len(parts)>2 else (f'https://t.me/{value.lstrip("@")}' if value.startswith('@') else '')
-    set_setting('force_sub_channel_id',value); set_setting('force_sub_channel_link',link)
-    await update.message.reply_text(f'✅ کانال اجباری تنظیم شد.\nشناسه: {value}\nلینک عضویت: {link or "—"}\n\n⚠️ مطمئن شو ربات توی این کانال ادمین باشه، وگرنه نمی‌تونه عضویت رو چک کنه.')
+
+    explicit_link=parts[2].strip() if len(parts)>2 else ''
+    channel_id=value; link=explicit_link
+    warn=''
+
+    if value.startswith('http') or value.startswith('t.me/'):
+        if not link:
+            link=value if value.startswith('http') else f'https://{value}'
+        m=re.search(r't\.me/([A-Za-z0-9_]{5,})/?$', value)
+        if m and not value.rstrip('/').split('/')[-1].startswith('+'):
+            channel_id='@'+m.group(1)
+        else:
+            warn=('\n\n⚠️ چون این یک لینک دعوت خصوصیه (نه لینک عمومی کانال)، ربات نمی‌تونه با همین به‌تنهایی '
+                  'عضویت رو خودکار چک کنه. برای چک خودکار، شناسه‌ی عددی کانال رو هم بفرست:\n'
+                  '/setchannel -100XXXXXXXXXX ' + link)
+    elif value.startswith('@'):
+        if not link:
+            link=f'https://t.me/{value.lstrip("@")}'
+
+    set_setting('force_sub_channel_id',channel_id); set_setting('force_sub_channel_link',link)
+    await update.message.reply_text(
+        f'✅ کانال اجباری تنظیم شد.\nشناسه: {channel_id}\nلینک عضویت: {link or "—"}{warn}\n\n'
+        '⚠️ یادت نره: ربات باید توی این کانال ادمین باشه، وگرنه اصلاً نمی‌تونه عضویت رو چک کنه.'
+    )
