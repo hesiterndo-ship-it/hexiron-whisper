@@ -3,7 +3,7 @@ import logging
 from telegram.ext import Application,CommandHandler,CallbackQueryHandler,MessageHandler,filters
 from config import BOT_TOKEN, TELEGRAM_PROXY_URL
 from database import init_db,expire_sessions
-from handlers import start,whisper,callbacks,private_relay,group_on,group_off,admin,reports,resolve_report,ban_user,whisper_refresh
+from handlers import start,whisper,callbacks,private_relay,group_on,group_off,admin,reports,resolve_report,ban_user,whisper_refresh,set_channel
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -46,7 +46,12 @@ def main():
     app.add_handler(CommandHandler('wreports',reports))
     app.add_handler(CommandHandler('resolve',resolve_report))
     app.add_handler(CommandHandler('wban',ban_user))
+    app.add_handler(CommandHandler('setchannel',set_channel))
     app.add_handler(CallbackQueryHandler(callbacks))
+    # معادل فارسی /start توی پیوی (باید قبل از هندلر عمومی پیوی ثبت بشه)
+    app.add_handler(MessageHandler(filters.Regex('^(شروع|استارت)$') & filters.ChatType.PRIVATE, start))
+    # نوشتن «نجوا» به‌عنوان Reply روی پیام کاربر در گروه، دقیقاً معادل /whisper
+    app.add_handler(MessageHandler(filters.Regex('^نجوا$') & filters.ChatType.GROUPS & filters.REPLY, whisper))
     app.add_handler(MessageHandler(filters.ChatType.PRIVATE,private_relay))
     app.add_error_handler(on_error)
     if app.job_queue is None:

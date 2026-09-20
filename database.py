@@ -15,6 +15,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS groups(chat_id INTEGER PRIMARY KEY, title TEXT, enabled INTEGER DEFAULT 0, created_at INTEGER NOT NULL, plan TEXT DEFAULT 'free', settings_json TEXT DEFAULT '{}', owner_id INTEGER);
         CREATE INDEX IF NOT EXISTS idx_groups_owner ON groups(owner_id);
         CREATE TABLE IF NOT EXISTS sessions(id TEXT PRIMARY KEY, chat_id INTEGER, a_id INTEGER NOT NULL, b_id INTEGER NOT NULL, status TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL);
+        CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT);
         CREATE TABLE IF NOT EXISTS blocks(blocker INTEGER NOT NULL, blocked INTEGER NOT NULL, created_at INTEGER NOT NULL, PRIMARY KEY(blocker,blocked));
         CREATE TABLE IF NOT EXISTS reports(id INTEGER PRIMARY KEY AUTOINCREMENT, session_id TEXT, reporter INTEGER, target INTEGER, reason TEXT, created_at INTEGER, status TEXT DEFAULT 'open');
         CREATE TABLE IF NOT EXISTS usage(user_id INTEGER NOT NULL, day TEXT NOT NULL, count INTEGER DEFAULT 0, PRIMARY KEY(user_id,day));
@@ -27,6 +28,12 @@ def init_db():
         cols=[r['name'] for r in c.execute('PRAGMA table_info(groups)').fetchall()]
         if 'owner_id' not in cols:
             c.execute('ALTER TABLE groups ADD COLUMN owner_id INTEGER'); c.commit()
+        # migration: نجوا دیگه ناشناس نیست - اسم نمایشی هر دو طرف رو نگه می‌داریم
+        cols=[r['name'] for r in c.execute('PRAGMA table_info(sessions)').fetchall()]
+        if 'a_name' not in cols:
+            c.execute('ALTER TABLE sessions ADD COLUMN a_name TEXT'); c.commit()
+        if 'b_name' not in cols:
+            c.execute('ALTER TABLE sessions ADD COLUMN b_name TEXT'); c.commit()
         c.close()
 
 def ensure_user(user_id, username=None):
@@ -90,9 +97,19 @@ def is_banned(uid):
 def set_banned(uid,value):
     ensure_user(uid); c=db(); c.execute('UPDATE users SET banned=? WHERE user_id=?',(int(value),uid)); c.commit(); c.close()
 
-def create_session(chat_id,a,b,ttl):
+def get_setting(key, default=''):
+    c=db(); r=c.execute('SELECT value FROM settings WHERE key=?',(key,)).fetchone(); c.close()
+    return r['value'] if r else default
+
+def set_setting(key, value):
+    c=db(); c.execute('INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',(key,value)); c.commit(); c.close()
+
+def create_session(chat_id,a,b,ttl,a_name='',b_name=''):
     sid=secrets.token_urlsafe(9); now=int(time.time()); ttl=max(60,int(ttl))
-    c=db(); c.execute('INSERT INTO sessions VALUES(?,?,?,?,?,?,?)',(sid,chat_id,a,b,'pending',now,now+ttl)); c.commit(); c.close(); return sid
+    c=db(); c.execute(
+        'INSERT INTO sessions(id,chat_id,a_id,b_id,status,created_at,expires_at,a_name,b_name) VALUES(?,?,?,?,?,?,?,?,?)',
+        (sid,chat_id,a,b,'pending',now,now+ttl,a_name,b_name)
+    ); c.commit(); c.close(); return sid
 
 def session(sid):
     c=db(); r=c.execute('SELECT * FROM sessions WHERE id=?',(sid,)).fetchone(); c.close(); return r
