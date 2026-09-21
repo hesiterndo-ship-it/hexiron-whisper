@@ -46,12 +46,20 @@ async def _check_force_sub(update: Update, context: ContextTypes.DEFAULT_TYPE, u
         return True
     if await _is_paid_plan(chat_id):
         return True
+    check_error = None
     try:
         member = await context.bot.get_chat_member(channel_id, user.id)
         if member.status in ('member', 'administrator', 'creator'):
             return True
-    except Exception:
-        pass
+    except Exception as e:
+        check_error = str(e)
+
+    if check_error:
+        await update.effective_message.reply_text(
+            f'⚠️ چک عضویت شکست خورد:\n`{check_error}`\nشناسه‌ی کانال: `{channel_id}`\n\n'
+            'این متن رو برای بررسی نگه دار.', parse_mode='Markdown',
+        )
+        return False
 
     link = _force_sub_link()
     kb_rows = []
@@ -64,7 +72,6 @@ async def _check_force_sub(update: Update, context: ContextTypes.DEFAULT_TYPE, u
         reply_markup=InlineKeyboardMarkup(kb_rows),
     )
     return False
-
 
 def menu():
     rows=[[InlineKeyboardButton('📖 راهنما',callback_data='help'),InlineKeyboardButton('🆔 شناسه من',callback_data='myid')],
@@ -119,11 +126,17 @@ async def callbacks(update:Update,context:ContextTypes.DEFAULT_TYPE):
             return await q.message.reply_text('✅ محدودیتی فعال نیست، می‌تونی از نجوا استفاده کنی.')
         try:
             member=await context.bot.get_chat_member(channel_id,u.id)
-            if member.status in ('member','administrator','creator'):
-                return await q.message.reply_text('✅ عضویتت تایید شد! حالا برگرد به گروه و دوباره روی پیام موردنظر Reply کن و بنویس «نجوا».')
-        except Exception:
-            pass
-        return await q.message.reply_text('❌ هنوز عضو کانال نشدی. بعد از عضویت دوباره دکمه رو بزن.')
+        except Exception as e:
+            # این یعنی خودِ درخواست چک عضویت شکست خورده (نه اینکه عضو نبوده) -
+            # معمولاً یعنی channel_id اشتباهه یا ربات توی کانال ادمین نیست.
+            return await q.message.reply_text(
+                f'⚠️ چک عضویت شکست خورد (نه اینکه عضو نیستی - خودِ درخواست خطا داد):\n`{e}`\n\n'
+                f'شناسه‌ی کانالی که چک شد: `{channel_id}`\n\n'
+                'این متن خطا رو برای بررسی نگه دار.', parse_mode='Markdown',
+            )
+        if member.status in ('member','administrator','creator'):
+            return await q.message.reply_text('✅ عضویتت تایید شد! حالا برگرد به گروه و دوباره روی پیام موردنظر Reply کن و بنویس «نجوا».')
+        return await q.message.reply_text(f'❌ هنوز عضو کانال نشدی (وضعیت فعلی: {member.status}). بعد از عضویت دوباره دکمه رو بزن.')
     if data.startswith('acc:'):
         sid=data[4:]; s=session(sid)
         if not s or s['b_id']!=u.id or s['status']!='pending': return await q.message.reply_text('این درخواست دیگر معتبر نیست.')
